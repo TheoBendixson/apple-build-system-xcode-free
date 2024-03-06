@@ -5,15 +5,24 @@ This is the whole thing. It's what I actually use to build and ship the actual g
 
 The one thing you will immediately notice is the lack of an Xcode project. It's not that I don't have an Xcode project. I do, but I only use Xcode as a debugger and totally bypass using it as a build system.
 
-Xcode's build system is slow and more complicated than mine, so I don't use it. I like to walk through the logic of a process procedurally. It annoys me that Xcode has you configure the build by editing a bunch of plist files instead of just programming it like you would anything else. I want to follow my build from start to finish, not have a bunch of magic happening under the hood that I can't easily step through and debug.
+Xcode's build system is slow and more complicated than mine, so I don't use it. I like to walk through the logic of a process procedurally. It annoys me that Xcode has you configure the build by editing a bunch of plist files instead of just programming it like you would anything else. I want to follow my build from start to finish, not have a bunch of magic happening under the hood that I can't easily step through and debug, so that's the rationale for this thing existing.
 
-And don't even get me started on "Clean Build Folder." I never have to do that with my build system. There is no more guessing.
+Don't even get me started on "Clean Build Folder." I never have to do that with my build system. There is no more guessing. In general, software development shouldn't involve having to randomly "clean" things because the tools we use can't clean up after themselves. That just sounds like a problem Apple's engineering team has foisted upon, me, the developer, and it smells of overly complicated software that produces weird side effects and doesn't run the same way all the time.
 
 Becuase I don't use Xcode's build system, I have basically kicked myself out of the walled Eden and now have to fend for myself when it comes to code signing, provisioning, and entitlements. 
 
 I'm not using a default project that sets this up for me. So while you might go into Xcode and press a toggle thingy to enable something like Game Center, I have to find the plist key Apple's putting into the Entitlement.plist instead. If I don't, Apple will give me a really cryptic error after I submit my game.
 
 So I write this to show you the ropes and hopefully speed up your build process. I had to learn many of these lessons the hard way, through trial and error. If I can show the places where I crashed my ship on the rocks, you should be able to avoid some of the traps I got sucked into when learning how to build and distribute Mac OS apps without tightly coupling myself to Xcode and its build system.
+
+## Apple Is Very Particular About Directory Structures
+Pay close attention to the way the app bundle is constructed because that is exactly how you will need to construct yours. There is no wiggle room here. If you deviate from this directory structure, you will get cryptic errors, so don't do it.
+
+## App Icon Generation
+I don't generate my app icons using this build script. I have a separate shell script I run from time to time to genearte the app icon as an icns file. This build script assumes you already have a icns file and are simply copying it from some source directory into your app bundle.
+
+## Steam Debugging
+You may have noticed that when I'm doing a debug build, and the storefront is Steam, I copy over a text file with my game's steam ID in it. The file tells Steam to activate when you launch your game in a debug mode, allowing you to test your Steam achievements in a debug mode.
 
 ## Code Signing for Different Storefronts
 Mooselutions is currently available on Steam and the Mac App Store.
@@ -80,3 +89,24 @@ To recap, you *never* reset this number. It starts at zero and keeps going up. I
 
 #### LSMinimumSystemVersion
 This should be the same as the minimum system version you use to compile your game's executable. This is required in order to be on the Mac App Store.
+
+#### CFBundleSupportedPlatforms
+I just remember this one being a pain in the ass because if you don't have it organized with an array of strings, App Store Connect gets all kinds of confused 
+
+### Entitlements.Plist
+The first thing to note is the need for different entitlements for different means of distributing the game. When you put the game on Steam, you can't access things like Game Center, and achievements run through Steam's systems instead of Apple's.
+
+#### com.apple.security.network.client
+Anytime your app or game needs to access the network, even if it's through a third-party library like Steam's client library, you're going to need this entitlement. Notice that I use it in both the Steam and Mac App Store builds, basically to enable network communication for achievements.
+
+#### com.apple.security.cs.disable-library-validation
+I had to put this one in to allow the Steam library to run at all. If you don't have this entitlement, I believe you get an immediate crash on start up mentioning the need for the key.
+
+#### com.apple.security.cs.allow-dyld-environment-variables
+It's a similar story with this one. I needed it to use Steam's library, which I use for achievements and their game controller support.
+
+#### com.apple.security.app-sandbox
+I believe this one was needed for the Mac App Store build, specifically to get Game Center working. If you have the Game Center Entitlment, you need this one too.
+
+#### com.apple.developer.game-center
+This is the Game Center entitlement. If you are used to clicking on a toggle in Xcode to enable Game Center, this entitlement gets put into your entitlements plist for you. If you sign your build with this entitlement, it won't run on your computer unless you install the game from the Mac App Store.
