@@ -1,7 +1,7 @@
 # A Guide to My Game's Actual Build Script
 In the spirit of being real, I have included my game's actual build script on Apple platforms.
 
-This is the whole thing. It's what I actually use to build and ship the actual game (Mooselutions) that I actually sell for real money ($4.99).
+This is the whole thing. It's what I actually use to build and ship the actual game (Mooselutions) that I actually sell for real money ($5.99).
 
 The one thing you will immediately notice is the lack of an Xcode project. It's not that I don't have an Xcode project. I do, but I only use Xcode as a debugger and totally bypass using it as a build system.
 
